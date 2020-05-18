@@ -27,6 +27,17 @@ def setup_aws_env():
 
 
 def get_raw_data_location(dry_run: bool = False):
+    """
+    Gets raw data location, depending on the dry_run parameter
+    Returns just a small amount of data in case of dry run, used
+    in testing setting
+
+    Keyword Arguments:
+        dry_run {bool} -- Users choice of it is testing or no (default: {False})
+
+    Returns:
+        {tuple} -- Raw data paths
+    """
     raw_data_bucket_name = "udacity-dend"
 
     if not dry_run:
@@ -40,12 +51,38 @@ def get_raw_data_location(dry_run: bool = False):
 
 
 def setup_output(output_bucket_name: str, bucket_exists: bool = True):
+    """
+    Setups output bucket, if it does not exist
+
+    Arguments:
+        output_bucket_name {str} -- Output bucket name
+
+    Keyword Arguments:
+        bucket_exists {bool} -- User choice if bucket exists or not (default: {True})
+    """
     if not bucket_exists:
         logger.info(f"Creating Bucket: `{output_bucket_name}`")
         create_bucket(output_bucket_name)
 
 
 def run_sparkify_etl(output_bucket_name: str, song_data_path: str, log_data_path: str):
+    """
+    Run complete Sparkify ETL processing the Raw Songs and Log data and transforming it
+    to a Star Schema data model, with 4 Dimension tables and 1 main table
+        Main Table:
+            - Songs
+        Dimensional Tables:
+            - Artists
+            - Users
+            - Time
+            - Songsplay
+    Data is written to S3 in the Parquet format, partioned by key parameters for performance
+
+    Arguments:
+        output_bucket_name {str} -- Output Bucket Name
+        song_data_path {str} --  S3 Path to Raw Song Data
+        log_data_path {str} -- S3 Path to Raw Log Data
+    """
 
     spark = create_spark_session()
 
@@ -56,7 +93,7 @@ def run_sparkify_etl(output_bucket_name: str, song_data_path: str, log_data_path
     songs, artists = process_song_data(
         spark, song_data_path, output_bucket_name)
     logger.info("Processing Log Data")
-    users, time, songplays = process_log_data(
+    process_log_data(
         spark, log_data_path, output_bucket_name, songs, artists)
     logger.info("Sparkify ETL is completed")
 

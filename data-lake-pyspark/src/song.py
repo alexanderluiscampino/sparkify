@@ -16,8 +16,26 @@ logger.setLevel(logging.INFO)
 
 
 def process_song_data(spark, s3_raw_data_path: str, output_bucket_name: str):
+    """
+    Handles the creation of the central dimensional table based on the raw song data
+
+    Tables created:
+        -- Song table
+        -- Artist table
+
+    Arguments:
+        spark {SparkSession} -- Spark Session
+        s3_raw_data_path {str} -- S3 path of raw songs data JSON files
+        output_bucket_name {str} -- Output bucket name
+    """
 
     def get_song_schema():
+        """
+        Returns song spark dataframe schema with correct data types
+
+        Returns:
+            {StructType} -- Song schema
+        """
         return StructType([
             StructField("artist_id", StringType(), False),
             StructField("artist_latitude", StringType(), True),
@@ -31,6 +49,16 @@ def process_song_data(spark, s3_raw_data_path: str, output_bucket_name: str):
         ])
 
     def create_song_table(song_raw, output_bucket_name: str):
+        """
+        Create sogs pyspark dataframe
+
+        Arguments:
+            log_raw {DerivativeDF} -- Log helping class for pyspak dtaframes
+            output_bucket_name {str} -- Output in S3 location
+
+        Returns:
+            {DerivativeDF} -- songs derivate dataframe
+        """
         songs = DerivativeDF(song_raw.df.select(
             "song_id", "title", "artist_id", "year", "duration"))
         songs._write_to_parquet(
@@ -41,6 +69,16 @@ def process_song_data(spark, s3_raw_data_path: str, output_bucket_name: str):
         return songs
 
     def create_artists_table(song_raw, output_bucket_name: str):
+        """
+        Create artists pyspark dataframe
+
+        Arguments:
+            log_raw {DerivativeDF} -- Log helping class for pyspak dtaframes
+            output_bucket_name {str} -- Output in S3 location
+
+        Returns:
+            {DerivativeDF} -- artists derivate dataframe
+        """
         artists = DerivativeDF(song_raw.df
                                .select(
                                    "artist_id",

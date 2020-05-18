@@ -32,8 +32,35 @@ logger.setLevel(logging.INFO)
 
 
 def process_log_data(spark, s3_raw_data_path: str, output_bucket_name: str, songs: DerivativeDF, artists: DerivativeDF):
+    """
+    Processes log data creating the dimnensionl tables associated with it
+
+    It will utilize the Songs and Artists Derivative DF to access their data in the form of a Spark DF
+    and join with the log data to create the necessary dimensional tables.
+
+    The output of this fuction is the following 3 tables, in S3, in the parquet format:
+        - Users Table
+        - Time Table
+        - SongsPlay Table
+
+    Arguments:
+        spark {SparkSession} -- Spark Session
+        s3_raw_data_path {str} -- Location of raw log data in S3
+        output_bucket_name {str} -- Output bucket for processed data
+        songs {DerivativeDF} -- Songs derivative DF
+        artists {DerivativeDF} -- Artists derivative DF
+
+    Returns:
+        {DerivativeDF} -- users, time, songsplay
+    """
 
     def get_log_schema():
+        """
+        Returns log spark dataframe schema with correct data types
+
+        Returns:
+            {StructType} -- Log schema
+        """
         return StructType([
             StructField("artist", StringType(), True),
             StructField("auth", StringType(), False),
@@ -61,6 +88,16 @@ def process_log_data(spark, s3_raw_data_path: str, output_bucket_name: str, song
     )
 
     def create_users_table(log_raw, output_bucket_name: str):
+        """
+        Create users pyspark dataframe
+
+        Arguments:
+            log_raw {DerivativeDF} -- Log helping class for pyspak dtaframes
+            output_bucket_name {str} -- Output in S3 location
+
+        Returns:
+            {DerivativeDF} -- users derivate dataframe
+        """
         users = DerivativeDF(log_raw.df
                              .withColumn("max_ts_user", max("ts").over(Window.partitionBy("userID")))
                              .filter(
@@ -84,6 +121,16 @@ def process_log_data(spark, s3_raw_data_path: str, output_bucket_name: str, song
         return users
 
     def create_time_table(log_raw, output_bucket_name: str):
+        """
+        Create time pyspark dataframe
+
+        Arguments:
+            log_raw {DerivativeDF} -- Log helping class for pyspak dtaframes
+            output_bucket_name {str} -- Output in S3 location
+
+        Returns:
+            {DerivativeDF} -- time derivate dataframe
+        """
         time = DerivativeDF(log_raw.df
                             .withColumn("hour", hour("start_time"))
                             .withColumn("day", dayofmonth("start_time"))
@@ -103,6 +150,16 @@ def process_log_data(spark, s3_raw_data_path: str, output_bucket_name: str, song
         return time
 
     def create_songsplay_table(log_raw, songs, artists, output_bucket_name: str):
+        """
+        Create sogsplay pyspark dataframe
+
+        Arguments:
+            log_raw {DerivativeDF} -- Log helping class for pyspak dtaframes
+            output_bucket_name {str} -- Output in S3 location
+
+        Returns:
+            {DerivativeDF} -- songsplay derivate dataframe
+        """
         songs_temp = (
             songs.df
             .join(artists.df, "artist_id", "full")
