@@ -8,8 +8,8 @@ To build a state of the art data pipeline using Airflow to be able to run schedu
 ## Datasets
 
 Datasets are publicly avaialable in the following S3 Bucket Locations:
-    * Event Data: `s3://udacity-dend/log_data`
-    * Songs Data: `s3://udacity-dend/song_data`
+   * Event Data: `s3://udacity-dend/log_data`
+   * Songs Data: `s3://udacity-dend/song_data`
 
 These are JSON files, with known schemas and partitioned in S3 by year/month, which is extremely useful to load only portions of the data and not the whole data set everytime, since the size of these datasets will grow tremendously in the future
 
